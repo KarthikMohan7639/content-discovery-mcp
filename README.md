@@ -69,7 +69,7 @@ Claude Desktop / Claude Code (`mcp.json` / `claude_desktop_config.json`):
     "content-discovery": {
       "command": "python",
       "args": ["-m", "cdmcp.server"],
-      "cwd": "/absolute/path/to/content-discovery-mcp/src"
+      "cwd": "/absolute/path/to/content-discovery-mcp"
     }
   }
 }
@@ -155,8 +155,27 @@ paths (`.env`, `.git/HEAD`, `backup.sql`, `/admin`, `/login`,
 `/api/health`, `robots.txt`) among them.
 
 ```bash
-python tests/target_app.py            # starts on http://127.0.0.1:5055/
-python tests/run_e2e.py               # drives the scanner directly, asserts correctness
+python tests/target_app.py            # terminal 1: starts on http://127.0.0.1:5055/
+python tests/run_e2e.py               # terminal 2: drives the scan engine directly, asserts correctness
+python tests/mcp_client_test.py       # terminal 2: spawns the MCP server over stdio and calls every tool
+```
+
+`mcp_client_test.py` is the full-stack check: it talks to the server via
+the real MCP protocol (as Claude Code / Claude Desktop would) and asserts
+that scans are refused before `set_scope`, out-of-scope hosts are refused
+and written to `logs/scope_audit.jsonl`, the Express stack is detected,
+and the 7 real paths (and only those) come back with `.env` ranked first.
+
+To drive it interactively with an agent, register it with Claude Code:
+
+```bash
+claude mcp add content-discovery -- python -m cdmcp.server
+```
+
+or browse the tools in the MCP Inspector:
+
+```bash
+npx @modelcontextprotocol/inspector python -m cdmcp.server
 ```
 
 Real output from a run against the bundled test app (112 requests, ~100
@@ -198,4 +217,5 @@ src/cdmcp/
 tests/
   target_app.py     local deliberately-flawed Flask app for safe testing
   run_e2e.py        end-to-end smoke test against it
+  mcp_client_test.py  full MCP-protocol test (stdio client -> server)
 ```
