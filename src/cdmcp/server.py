@@ -10,12 +10,17 @@ agent can read them directly without having to parse prose.
 
 from __future__ import annotations
 
+import logging
+
 import httpx
 from mcp.server.mcpserver import MCPServer
 
 from .fingerprint import available_wordlists, fingerprint_target as _fingerprint_target
 from .scanner import ScanConfig, ScanManager
 from .scope import Scope, ScopeViolation
+
+# httpx logs every request at INFO; that floods stderr during a scan.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 mcp = MCPServer("content-discovery")
 
